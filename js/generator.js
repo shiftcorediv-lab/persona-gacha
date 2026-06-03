@@ -199,16 +199,39 @@ const PersonaGenerator = (function () {
   }
 
   function generateCallHearing(type, basicInfo, rng) {
-    if (type.id === 'T002' || type.id === 'T012') {
-      return '本人は「電話はよく使う」と話しますが、LINE通話と通常電話の区別が曖昧です。家族への連絡が中心です。';
+  const familyCount = parseInt(basicInfo.familyDiscountCount, 10);
+  const hasFamilyCallTarget = !Number.isNaN(familyCount) && familyCount >= 2;
+
+  if (type.id === 'T002' || type.id === 'T012') {
+    if (hasFamilyCallTarget) {
+      return '本人は「電話はよく使う」と話しますが、LINE通話と通常電話の区別が曖昧です。家族への連絡が中心ですが、通常電話かLINE通話かは追加確認が必要です。';
     }
 
-    if (basicInfo.callOption.includes('かけ放題')) {
-      return '週8回前後、1回あたり10分以上の通話があります。家族外への通常電話もあり、通話オプションを意識している可能性があります。';
+    return '本人は「電話はよく使う」と話しますが、LINE通話と通常電話の区別が曖昧です。ファミリー割引内通話ではなく、LINEや通常電話をまとめて「電話」と表現している可能性があります。';
+  }
+
+  if (basicInfo.callOption === 'かけ放題オプション') {
+    if (hasFamilyCallTarget) {
+      return '週8回前後、1回あたり10分以上の通話があります。家族への通話もありますが、職場・店舗・病院など家族外への通常電話もあります。';
     }
 
+    return '週8回前後、1回あたり10分以上の通話があります。ファミリー割引内通話ではなく、職場・店舗・病院など家族外への通常電話が中心です。';
+  }
+
+  if (basicInfo.callOption === '5分通話無料オプション') {
     return '週2〜5回程度、1回あたり3〜5分ほどの短時間通話が中心です。LINE通話と通常電話はある程度区別できています。';
   }
+
+  if (basicInfo.callOption === 'ahamo標準：5分以内通話無料') {
+    return '週2〜5回程度、1回あたり5分以内の短時間通話が中心です。ahamo標準の5分以内通話無料に収まりやすい使い方です。';
+  }
+
+  if (basicInfo.callOption === 'ahamo + かけ放題オプション') {
+    return '週8回前後、1回あたり10分以上の通話があります。ahamo利用中ですが、長めの通常電話があるため、かけ放題オプションを追加しています。';
+  }
+
+  return '週2〜5回程度、1回あたり3〜5分ほどの短時間通話が中心です。LINE通話と通常電話はある程度区別できています。';
+}
 
   function generateDataHearing(type, basicInfo, rng) {
     if (type.id === 'T009') {
