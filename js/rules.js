@@ -8,6 +8,7 @@ const Rules = (function () {
     checkHome5gRules(persona, errors, warnings);
     checkDeviceRules(persona, errors, warnings);
     checkPaymentRules(persona, errors, warnings);
+    checkCallRules(persona, errors, warnings);
 
     return {
       ok: errors.length === 0,
@@ -104,7 +105,51 @@ const Rules = (function () {
     }
   }
 
+function checkCallRules(persona, errors, warnings) {
+  const callOption = persona.basicInfo.callOption;
+  const familyDiscountCount = persona.basicInfo.familyDiscountCount;
+  const familyCount = parseInt(familyDiscountCount, 10);
+
+  const validDocomoCallOptions = [
+    'なし',
+    '5分通話無料オプション',
+    'かけ放題オプション'
+  ];
+
+  const validAhamoCallOptions = [
+    'ahamo標準：5分以内通話無料',
+    'ahamo + かけ放題オプション'
+  ];
+
+  const allValidCallOptions = [
+    ...validDocomoCallOptions,
+    ...validAhamoCallOptions
+  ];
+
+  if (!allValidCallOptions.includes(callOption)) {
+    errors.push(`通話オプションに不正な値があります：${callOption}`);
+  }
+
+  if (callOption === 'ファミリー割引内通話メイン') {
+    errors.push('ファミリー割引内通話メインは通話オプションではなく、ヒアリング情報として扱う必要があります');
+  }
+
+  const callHearingText = Object.values(persona.hearingMap || {})
+    .map((item) => item.text || '')
+    .join('\n');
+
+  const mentionsFamilyCall =
+    callHearingText.includes('家族への通話が中心') ||
+    callHearingText.includes('家族内通話') ||
+    callHearingText.includes('ファミリー割引内通話');
+
+  if (!Number.isNaN(familyCount) && familyCount <= 1 && mentionsFamilyCall) {
+    warnings.push('ファミリー割引人数が1人なのに、家族内通話中心のような表現があります');
+  }
+}
+  
   return {
     validatePersona
   };
 })();
+
